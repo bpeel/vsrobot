@@ -39,14 +39,13 @@ class User:
 
 class Game:
     def __init__(self):
-        self.players = []
+        self.players = {}
         self.started = False
         
     def add_player(self, player):
-        self.players.append(player)
+        self.players[player.id] = player
 
 the_game = None
-
 
 def send_message(args):
     try:
@@ -69,7 +68,7 @@ def send_message(args):
 def report_status(chat):
     buf = []
 
-    for player in the_game.players:
+    for player in the_game.players.values():
         buf.append("<b>")
         buf.append(html.escape(player.name))
         buf.append("</b>\n")
@@ -173,9 +172,26 @@ def command_komenci(message, args):
     else:
         send_reply(message, "La ludo jam komenciĝis")
 
-    print(user.name, user.id)
+def command_aligxi(message, args):
+    global the_game
+
+    user = get_from_user(message)
+
+    if user is None:
+        return
+
+    if the_game is None:
+        send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
+    elif user.id in the_game.players:
+        send_reply(message, "Vi jam estas en la ludo")
+    elif the_game.started:
+        send_reply(message, "La ludo jam komenciĝis")
+    else:
+        the_game.add_player(user)
+        report_status(message['chat'])
 
 command_map = {
+    '/aligxi' : command_aligxi,
     '/komenci' : command_komenci
 }
 
