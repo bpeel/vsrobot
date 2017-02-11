@@ -45,6 +45,20 @@ class User:
         self.name = name
         self.words = []
 
+def take_from_set(word, tile_set):
+    tile_set = list(tile_set)
+    remaining = []
+
+    for letter in word:
+        for i, tile in enumerate(tile_set):
+            if tile == letter:
+                tile_set[i] = None
+                break
+        else:
+            remaining.append(letter)
+
+    return remaining
+
 class Game:
     def __init__(self):
         self.players = {}
@@ -80,6 +94,28 @@ class Game:
                                          len(self.player_order)]
 
         return True
+
+    def remove_tiles_in_play(self, tiles):
+        n_tiles = len(self.tiles_in_play)
+
+        for t in tiles:
+            for i, p in enumerate(self.tiles_in_play):
+                if t == p:
+                    end_tile = self.tiles_in_play.pop()
+                    if i < len(self.tiles_in_play):
+                        self.tiles_in_play[i] = end_tile
+                    break
+
+    def take_word(self, player, word):
+        player = self.players[player.id]
+
+        # First try taking the word from the center
+        remaining = take_from_set(word, self.tiles_in_play)
+        if len(remaining) == 0:
+            self.remove_tiles_in_play(word)
+            player.words.append(word)
+            return ("{} prenas la vorton {} de la literoj en la centro"
+                    .format(player.name, word))
 
 the_game = None
 last_command_time = int(time.time())
@@ -307,12 +343,41 @@ def command_fini(message, args):
         score_game(message['chat'])
         the_game = None
 
+def command_preni(message, args):
+    global the_game
+
+    user = get_from_user(message)
+
+    if user is None:
+        return
+
+    word = args.strip()
+
+    if len(word) == 0:
+        send_reply(message, "Bonvolu sendi vorton, ekzemple /p kato")
+    elif len(word) < 3:
+        send_reply(message, "La vorto devas longi almenaŭ 3 literojn")
+    elif the_game is None:
+        send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
+    elif user.id not in the_game.players:
+        send_reply(message, "Vi ne estas en la ludo")
+    else:
+        note = the_game.take_word(user, word.upper())
+        if note is None:
+            send_reply(message, "Tiu vorto ne troveblas en la ludo")
+        else:
+            send_message({ 'chat_id' : last_chat['id'],
+                           'text' : note })
+            report_status(message['chat'])
+
 command_map = {
     '/aligxi' : command_aligxi,
     '/komenci' : command_komenci,
     '/turni' : command_turni,
     '/t' : command_turni,
-    '/fini' : command_fini
+    '/fini' : command_fini,
+    '/p' : command_preni,
+    '/preni' : command_preni
 }
 
 def process_command(message, command, args):
