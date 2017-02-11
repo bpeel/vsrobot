@@ -104,6 +104,8 @@ def report_status(chat):
     if the_game.started:
         buf.append("<b>Literoj:</b>\n\n")
         buf.append(' '.join(the_game.tiles_in_play))
+        buf.append("\n\nRestantaj en la sako: ")
+        buf.append(str(len(the_game.tile_bag) - the_game.tile_pos))
         buf.append("\n\n")
 
     for player in the_game.player_order:
