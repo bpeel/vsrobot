@@ -7,6 +7,11 @@ import html
 import sys
 import time
 import os
+import random
+
+ALL_TILES = ("AAAAAAAAABBBCCĈĈDDDEEEEEEEEFFFGGĜĜHHĤIIIIIIIIIIJJJJJĴKKKKKKLL"
+             "LLMMMMMMNNNNNNNNOOOOOOOOOOOPPPPPRRRRRRRSSSSSSSŜŜTTTTTUUUŬŬVVZ")
+N_TILES_PER_GAME = 3
 
 conf_dir = os.path.expanduser("~/.vsrobot")
 update_id_file = os.path.join(conf_dir, "update_id")
@@ -40,10 +45,38 @@ class User:
 class Game:
     def __init__(self):
         self.players = {}
+        self.player_order = []
         self.started = False
+        self.tile_pos = 0
+
+        tiles = list(ALL_TILES)
+        for i in range(len(tiles) - 1, 0, -1):
+            j = random.randrange(0, i + 1)
+            tiles[i], tiles[j] = tiles[j], tiles[i]
+
+        self.tile_bag = tiles[0 : N_TILES_PER_GAME]
+        self.tiles_in_play = []
         
     def add_player(self, player):
+        if len(self.players) == 0:
+            self.next_go = player
         self.players[player.id] = player
+        self.player_order.append(player)
+
+    def turn(self):
+        if self.tile_pos >= len(self.tile_bag):
+            return False
+
+        if not self.started:
+            self.started = True
+
+        self.tiles_in_play.append(self.tile_bag[self.tile_pos])
+        self.tile_pos += 1
+        this_index = self.player_order.index(self.next_go)
+        self.next_go = self.player_order[(this_index + 1) %
+                                         len(self.player_order)]
+
+        return True
 
 the_game = None
 
@@ -68,12 +101,23 @@ def send_message(args):
 def report_status(chat):
     buf = []
 
-    for player in the_game.players.values():
+    if the_game.started:
+        buf.append("<b>Literoj:</b>\n\n")
+        buf.append(' '.join(the_game.tiles_in_play))
+        buf.append("\n\n")
+
+    for player in the_game.player_order:
+        if player == the_game.next_go:
+            buf.append("👉 ")
         buf.append("<b>")
         buf.append(html.escape(player.name))
         buf.append("</b>\n")
         buf.append(html.escape(', '.join(player.words)))
         buf.append("\n\n")
+
+    if not the_game.started:
+        buf.append("Tajpu /turni por komenci la ludon aŭ atendu "
+                   "pli da ludantoj")
 
     args = {
         'chat_id' : message['chat']['id'],
@@ -190,9 +234,29 @@ def command_aligxi(message, args):
         the_game.add_player(user)
         report_status(message['chat'])
 
+def command_turni(message, args):
+    global the_game
+
+    user = get_from_user(message)
+
+    if user is None:
+        return
+
+    if the_game is None:
+        send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
+    elif user.id != the_game.next_go.id:
+        send_reply(message, "Ne estas via vico")
+    elif not the_game.turn():
+        send_reply(message,
+                   "La literoj elĉerpiĝis. "
+                   "Tajpu /fini por fini la ludon")
+    else:
+        report_status(message['chat'])
+
 command_map = {
     '/aligxi' : command_aligxi,
-    '/komenci' : command_komenci
+    '/komenci' : command_komenci,
+    '/turni' : command_turni
 }
 
 def process_command(message, command, args):
