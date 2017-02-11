@@ -117,6 +117,36 @@ class Game:
             return ("{} prenas la vorton {} de la literoj en la centro"
                     .format(player.name, word))
 
+        # Otherwise try stealing a word
+        for other_player in self.player_order:
+            for other_word in other_player.words:
+                if len(other_word) >= len(word):
+                    continue
+
+                remaining = take_from_set(word, other_word)
+
+                if len(remaining) != len(word) - len(other_word):
+                    continue
+
+                center_remaining = take_from_set(remaining, self.tiles_in_play)
+
+                if len(center_remaining) > 0:
+                    continue
+
+                other_player.words.remove(other_word)
+                self.remove_tiles_in_play(remaining)
+                player.words.append(word)
+
+                return ("{} ŝtelas la vorton {} de {} kaj aldonas {} por "
+                        "krei la vorton {}"
+                        .format(player.name,
+                                other_word,
+                                other_player.name,
+                                "".join(remaining),
+                                word))
+
+        return None
+
 the_game = None
 last_command_time = int(time.time())
 
