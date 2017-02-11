@@ -13,6 +13,9 @@ ALL_TILES = ("AAAAAAAAABBBCCĈĈDDDEEEEEEEEFFFGGĜĜHHĤIIIIIIIIIIJJJJJĴKKKKKKL
              "LLMMMMMMNNNNNNNNOOOOOOOOOOOPPPPPRRRRRRRSSSSSSSŜŜTTTTTUUUŬŬVVZ")
 N_TILES_PER_GAME = 50
 
+GAME_TIMEOUT = 10
+MAX_TIMEOUT = 60 * 20
+
 conf_dir = os.path.expanduser("~/.vsrobot")
 update_id_file = os.path.join(conf_dir, "update_id")
 apikey_file = os.path.join(conf_dir, "apikey")
@@ -79,6 +82,7 @@ class Game:
         return True
 
 the_game = None
+last_command_time = int(time.time())
 
 def send_message(args):
     try:
@@ -186,9 +190,9 @@ def is_valid_update(update, last_update_id):
 
     return True
 
-def get_updates(last_update_id):
+def get_updates(last_update_id, timeout):
     args = {
-        'timeout': 60 * 5,
+        'timeout': timeout,
         'allowed_updates': ['message']
     }
 
@@ -312,7 +316,10 @@ command_map = {
 }
 
 def process_command(message, command, args):
+    global last_command_time
+
     if command in command_map:
+        last_command_time = int(time.time())
         command_map[command](message, args)
 
 def find_command(message):
@@ -336,9 +343,29 @@ def find_command(message):
 
     return None
 
+last_chat = None
+
 while True:
+    now = int(time.time())
+
+    if the_game is not None:
+        if now - last_command_time >= GAME_TIMEOUT * 60:
+            if last_chat is not None:
+                send_message({'chat_id' : last_chat['id'],
+                              'text' : ("Neniu sendis mesaĝon dum " +
+                                        str(GAME_TIMEOUT) +
+                                        " minutoj. La ludo finiĝos.")})
+                score_game(last_chat)
+            the_game = None
+            
     try:
-        updates = get_updates(last_update_id)
+        if the_game is None:
+            timeout = MAX_TIMEOUT
+        else:
+            timeout = min(GAME_TIMEOUT * 60 + last_command_time - now,
+                          MAX_TIMEOUT)
+        updates = get_updates(last_update_id, timeout)
+
     except GetUpdatesException as e:
         print("{}".format(e), file=sys.stderr)
         # Delay for a bit before trying again to avoid DOSing the server
@@ -348,6 +375,7 @@ while True:
     for update in updates:
         last_update_id = update['update_id']
         message = update['message']
+        last_chat = message['chat']
 
         command = find_command(message)
 
