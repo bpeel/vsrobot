@@ -413,7 +413,13 @@ command_map = {
 def process_command(message, command, args):
     global last_command_time
 
-    if command in command_map:
+    if message['chat']['type'] == 'private':
+        if command == '/start':
+            send_reply(message,
+                       "Bonvolu vidi la retejon ĉe "
+                       "http://busydoingnothing.co.uk/vsbot "
+                       "por instrukcioj de la ludo")
+    elif command in command_map:
         last_command_time = int(time.time())
         command_map[command](message, args)
 
