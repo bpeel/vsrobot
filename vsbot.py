@@ -129,6 +129,38 @@ def report_status(chat):
 
     send_message(args)
 
+def score_game(chat):
+    global the_game
+    
+    for player in the_game.player_order:
+        player.n_words = len(player.words)
+        player.n_letters = sum(len(word) for word in player.words)
+
+    buf = []
+
+    for player in the_game.player_order:
+        buf.append("<b>")
+        buf.append(html.escape(player.name))
+        buf.append("</b> : ")
+        buf.append("{} vortoj, {} literoj".format(player.n_words,
+                                                  player.n_letters))
+        buf.append("\n")
+
+    best = max(the_game.player_order,
+               key = lambda player: (player.n_words, player.n_letters))
+
+    buf.append("\nLa venkinto estas <b>")
+    buf.append(html.escape(player.name))
+    buf.append("</b>")
+
+    args = {
+        'chat_id' : message['chat']['id'],
+        'text' : ''.join(buf),
+        'parse_mode' : 'HTML'
+    }
+
+    send_message(args)
+
 def save_last_update_id(last_update_id):
     with open(update_id_file, 'w', encoding='utf-8') as f:
         print(last_update_id, file=f)
@@ -255,10 +287,27 @@ def command_turni(message, args):
     else:
         report_status(message['chat'])
 
+def command_fini(message, args):
+    global the_game
+
+    user = get_from_user(message)
+
+    if user is None:
+        return
+
+    if the_game is None:
+        send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
+    elif user.id not in the_game.players:
+        send_reply(message, "Vi ne estas en la ludo")
+    else:
+        score_game(message['chat'])
+        the_game = None
+
 command_map = {
     '/aligxi' : command_aligxi,
     '/komenci' : command_komenci,
-    '/turni' : command_turni
+    '/turni' : command_turni,
+    '/fini' : command_fini
 }
 
 def process_command(message, command, args):
