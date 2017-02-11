@@ -35,11 +35,54 @@ class User:
     def __init__(self, id, name):
         self.id = id
         self.name = name
+        self.words = []
 
 class Game:
-    pass
+    def __init__(self):
+        self.players = []
+        self.started = False
+        
+    def add_player(self, player):
+        self.players.append(player)
 
 the_game = None
+
+
+def send_message(args):
+    try:
+        req = urllib.request.Request(send_message_url,
+                                     json.dumps(args).encode('utf-8'))
+        req.add_header('Content-Type', 'application/json; charset=utf-8')
+        rep = json.load(io.TextIOWrapper(urllib.request.urlopen(req), 'utf-8'))
+    except urllib.error.URLError as e:
+        raise ProcessCommandException(e)
+    except json.JSONDecodeError as e:
+        raise ProcessCommandException(e)
+
+    try:
+        if rep['ok'] is not True:
+            raise ProcessCommandException("Unexpected response from "
+                                          "sendMessage request")
+    except KeyError as e:
+        raise ProcessCommandException(e)
+
+def report_status(chat):
+    buf = []
+
+    for player in the_game.players:
+        buf.append("<b>")
+        buf.append(html.escape(player.name))
+        buf.append("</b>\n")
+        buf.append(html.escape(', '.join(player.words)))
+        buf.append("\n\n")
+
+    args = {
+        'chat_id' : message['chat']['id'],
+        'text' : ''.join(buf),
+        'parse_mode' : 'HTML'
+    }
+
+    send_message(args)
 
 def save_last_update_id(last_update_id):
     with open(update_id_file, 'w', encoding='utf-8') as f:
@@ -113,33 +156,22 @@ def send_reply(message, note):
         'reply_to_message_id' : message['message_id']
     }
 
-    try:
-        req = urllib.request.Request(send_message_url,
-                                     json.dumps(args).encode('utf-8'))
-        req.add_header('Content-Type', 'application/json; charset=utf-8')
-        rep = json.load(io.TextIOWrapper(urllib.request.urlopen(req), 'utf-8'))
-    except urllib.error.URLError as e:
-        raise ProcessCommandException(e)
-    except json.JSONDecodeError as e:
-        raise ProcessCommandException(e)
-
-    try:
-        if rep['ok'] is not True:
-            raise ProcessCommandException("Unexpected response from "
-                                          "sendMessage request")
-    except KeyError as e:
-        raise ProcessCommandException(e)
+    send_message(args)
 
 def command_komenci(message, args):
+    global the_game
+
     user = get_from_user(message)
 
     if user is None:
         return
 
-    if the_game is not None:
-        send_reply(message, "La ludo jam komenciĝis")
+    if the_game is None:
+        the_game = Game()
+        the_game.add_player(user)
+        report_status(message['chat'])
     else:
-        send_reply(message, "ok")
+        send_reply(message, "La ludo jam komenciĝis")
 
     print(user.name, user.id)
 
