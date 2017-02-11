@@ -307,6 +307,7 @@ command_map = {
     '/aligxi' : command_aligxi,
     '/komenci' : command_komenci,
     '/turni' : command_turni,
+    '/t' : command_turni,
     '/fini' : command_fini
 }
 
