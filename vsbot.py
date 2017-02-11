@@ -11,7 +11,7 @@ import random
 
 ALL_TILES = ("AAAAAAAAABBBCCĈĈDDDEEEEEEEEFFFGGĜĜHHĤIIIIIIIIIIJJJJJĴKKKKKKLL"
              "LLMMMMMMNNNNNNNNOOOOOOOOOOOPPPPPRRRRRRRSSSSSSSŜŜTTTTTUUUŬŬVVZ")
-N_TILES_PER_GAME = 3
+N_TILES_PER_GAME = 50
 
 conf_dir = os.path.expanduser("~/.vsrobot")
 update_id_file = os.path.join(conf_dir, "update_id")
