@@ -591,7 +591,8 @@ while True:
     for update in updates:
         last_update_id = update['update_id']
         message = update['message']
-        last_chat = message['chat']
+        if message['chat']['type'] != 'private':
+            last_chat = message['chat']
 
         command = find_command(message)
 
