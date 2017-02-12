@@ -276,7 +276,9 @@ def report_status(chat):
 
     if len(the_game.tiles_in_play) == 0:
         buf.append("Tajpu /turni por komenci la ludon aŭ atendu "
-                   "pli da ludantoj")
+                   "pli da ludantoj. "
+                   "<a href=\"http://busydoingnothing.co.uk/vsrobot\">"
+                   "Jen instrukcioj</a>")
 
     args = {
         'chat_id' : message['chat']['id'],
