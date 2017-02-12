@@ -564,11 +564,14 @@ while True:
     if the_game is not None:
         if now - last_command_time >= GAME_TIMEOUT * 60:
             if last_chat is not None:
-                send_message({'chat_id' : last_chat['id'],
-                              'text' : ("Neniu sendis mesaĝon dum " +
-                                        str(GAME_TIMEOUT) +
-                                        " minutoj. La ludo finiĝos.")})
-                score_game(last_chat)
+                try:
+                    send_message({'chat_id' : last_chat['id'],
+                                  'text' : ("Neniu sendis mesaĝon dum " +
+                                            str(GAME_TIMEOUT) +
+                                            " minutoj. La ludo finiĝos.")})
+                    score_game(last_chat)
+                except ProcessCommandException as e:
+                    print("{}".format(e), file=sys.stderr)
             the_game = None
             
     try:
