@@ -3,3 +3,4 @@ aligxi - Aliĝi al ludo
 turni - Turni novan literon
 fini - Fini la ludon
 preni - Preni vorton
+malfari - Malfari la lastan agon

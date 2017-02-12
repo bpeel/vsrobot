@@ -59,11 +59,88 @@ def take_from_set(word, tile_set):
 
     return remaining
 
+class Undo:
+    pass
+
+class UndoTurnTile(Undo):
+    def __init__(self, letter):
+        self.letter = letter
+
+    def undo(self, player):
+        the_game.tiles_in_play.remove(self.letter)
+        the_game.tile_pos -= 1
+        return ("{} remetis la literon {} en la sakon"
+                .format(player.name,
+                        self.letter))
+
+class UndoStealWord(Undo):
+    def __init__(self, from_player, from_word, to_player, to_word):
+        self.from_player = from_player
+        self.from_word = from_word
+        self.to_player = to_player
+        self.to_word = to_word
+
+    def undo(self, player):
+        the_game.tiles_in_play.extend(take_from_set(from_word, to_word))
+        to_player.words.remove(to_word)
+        from_player.words.append(from_word)
+        
+        return ("{} redonis la vorton {} al {}"
+                .format(player.name,
+                        from_word,
+                        from_player.name))
+
+class Undo:
+    pass
+
+class UndoTurnTile(Undo):
+    def __init__(self, letter):
+        self.letter = letter
+
+    def undo(self, game, player):
+        game.tiles_in_play.remove(self.letter)
+        game.tile_pos -= 1
+        next_index = ((game.player_order.index(game.next_go) +
+                       len(game.player_order) - 1) % len(game.player_order))
+        game.next_go = game.player_order[next_index]
+        return ("{} remetis la literon {} en la sakon"
+                .format(player.name,
+                        self.letter))
+
+class UndoStealWord(Undo):
+    def __init__(self, from_player, from_word, to_player, to_word):
+        self.from_player = from_player
+        self.from_word = from_word
+        self.to_player = to_player
+        self.to_word = to_word
+
+    def undo(self, game, player):
+        game.tiles_in_play.extend(take_from_set(self.to_word, self.from_word))
+        self.from_player.words.append(self.from_word)
+        self.to_player.words.remove(self.to_word)
+        return ("{} redonis la vorton {} al {}"
+                .format(player.name,
+                        self.from_word,
+                        self.from_player.name))
+
+class UndoNewWord(Undo):
+    def __init__(self, to_player, to_word):
+        self.to_player = to_player
+        self.to_word = to_word
+
+    def undo(self, game, player):
+        game.tiles_in_play.extend(self.to_word)
+        self.to_player.words.remove(self.to_word)
+        return ("{} remetis la vorton {} al la centro"
+                .format(player.name,
+                        self.to_word))
+
 class Game:
     def __init__(self):
         self.players = {}
         self.player_order = []
         self.tile_pos = 0
+        self.undo_history = []
 
         tiles = list(ALL_TILES)
         for i in range(len(tiles) - 1, 0, -1):
@@ -83,7 +160,11 @@ class Game:
         if self.tile_pos >= len(self.tile_bag):
             return False
 
-        self.tiles_in_play.append(self.tile_bag[self.tile_pos])
+        letter = self.tile_bag[self.tile_pos]
+
+        self.undo_history.append(UndoTurnTile(letter))
+
+        self.tiles_in_play.append(letter)
         self.tile_pos += 1
         this_index = self.player_order.index(self.next_go)
         self.next_go = self.player_order[(this_index + 1) %
@@ -110,6 +191,7 @@ class Game:
         if len(remaining) == 0:
             self.remove_tiles_in_play(word)
             player.words.append(word)
+            self.undo_history.append(UndoNewWord(player, word))
             return ("{} prenas la vorton {} de la literoj en la centro"
                     .format(player.name, word))
 
@@ -133,6 +215,11 @@ class Game:
                 self.remove_tiles_in_play(remaining)
                 player.words.append(word)
 
+                self.undo_history.append(UndoStealWord(other_player,
+                                                       other_word,
+                                                       player,
+                                                       word))
+
                 return ("{} ŝtelas la vorton {} de {} kaj aldonas {} por "
                         "krei la vorton {}"
                         .format(player.name,
@@ -142,6 +229,10 @@ class Game:
                                 word))
 
         return None
+
+    def undo(self, player):
+        undo = self.undo_history.pop()
+        return undo.undo(self, player)
 
 the_game = None
 last_command_time = int(time.time())
@@ -394,6 +485,26 @@ def command_preni(message, args):
                            'text' : note })
             report_status(message['chat'])
 
+def command_malfari(message, args):
+    global the_game
+
+    user = get_from_user(message)
+
+    if user is None:
+        return
+
+    if the_game is None:
+        send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
+    elif user.id not in the_game.players:
+        send_reply(message, "Vi ne estas en la ludo")
+    elif len(the_game.undo_history) < 1:
+        send_reply(message, "Neniu malfaro eblas")
+    else:
+        note = the_game.undo(user)
+        send_message({ 'chat_id' : message['chat']['id'],
+                       'text' : note })
+        report_status(message['chat'])
+
 command_map = {
     '/aligxi' : command_aligxi,
     '/komenci' : command_komenci,
@@ -401,7 +512,8 @@ command_map = {
     '/t' : command_turni,
     '/fini' : command_fini,
     '/p' : command_preni,
-    '/preni' : command_preni
+    '/preni' : command_preni,
+    '/malfari' : command_malfari
 }
 
 def process_command(message, command, args):
