@@ -527,7 +527,7 @@ def process_command(message, command, args):
         if command == '/start':
             send_reply(message,
                        "Bonvolu vidi la retejon ĉe "
-                       "http://busydoingnothing.co.uk/vsbot "
+                       "http://busydoingnothing.co.uk/vsrobot "
                        "por instrukcioj de la ludo")
     elif command in command_map:
         last_command_time = int(time.time())
