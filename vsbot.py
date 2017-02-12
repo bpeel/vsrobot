@@ -413,6 +413,10 @@ command_map = {
 def process_command(message, command, args):
     global last_command_time
 
+    at_pos = command.find('@')
+    if at_pos >= 0:
+        command = command[0:at_pos]
+
     if message['chat']['type'] == 'private':
         if command == '/start':
             send_reply(message,
