@@ -63,7 +63,6 @@ class Game:
     def __init__(self):
         self.players = {}
         self.player_order = []
-        self.started = False
         self.tile_pos = 0
 
         tiles = list(ALL_TILES)
@@ -83,9 +82,6 @@ class Game:
     def turn(self):
         if self.tile_pos >= len(self.tile_bag):
             return False
-
-        if not self.started:
-            self.started = True
 
         self.tiles_in_play.append(self.tile_bag[self.tile_pos])
         self.tile_pos += 1
@@ -171,7 +167,7 @@ def send_message(args):
 def report_status(chat):
     buf = []
 
-    if the_game.started:
+    if len(the_game.tiles_in_play) > 0:
         buf.append("<b>Literoj:</b>\n\n")
         buf.append(' '.join(the_game.tiles_in_play))
         buf.append("\n\nRestantaj en la sako: ")
@@ -187,7 +183,7 @@ def report_status(chat):
         buf.append(html.escape(', '.join(player.words)))
         buf.append("\n\n")
 
-    if not the_game.started:
+    if len(the_game.tiles_in_play) == 0:
         buf.append("Tajpu /turni por komenci la ludon aŭ atendu "
                    "pli da ludantoj")
 
@@ -332,8 +328,6 @@ def command_aligxi(message, args):
         send_reply(message, "Estas neniu ludo. Tajpu /komenci por komenci unu")
     elif user.id in the_game.players:
         send_reply(message, "Vi jam estas en la ludo")
-    elif the_game.started:
-        send_reply(message, "La ludo jam komenciĝis")
     else:
         the_game.add_player(user)
         report_status(message['chat'])
