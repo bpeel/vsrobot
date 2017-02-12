@@ -390,7 +390,7 @@ def command_preni(message, args):
         if note is None:
             send_reply(message, "Tiu vorto ne troveblas en la ludo")
         else:
-            send_message({ 'chat_id' : last_chat['id'],
+            send_message({ 'chat_id' : message['chat']['id'],
                            'text' : note })
             report_status(message['chat'])
 
