@@ -274,12 +274,6 @@ def report_status(chat):
         buf.append(html.escape(', '.join(player.words)))
         buf.append("\n\n")
 
-    if len(the_game.tiles_in_play) == 0:
-        buf.append("Tajpu /turni por komenci la ludon aŭ atendu "
-                   "pli da ludantoj. "
-                   "<a href=\"http://busydoingnothing.co.uk/vsrobot\">"
-                   "Jen instrukcioj</a>")
-
     args = {
         'chat_id' : message['chat']['id'],
         'text' : ''.join(buf),
@@ -406,6 +400,13 @@ def command_komenci(message, args):
         the_game = Game()
         the_game.add_player(user)
         report_status(message['chat'])
+        note = ("Tajpu /turni por komenci la ludon aŭ atendu "
+                "pli da ludantoj. "
+                "<a href=\"http://busydoingnothing.co.uk/vsrobot\">"
+                "Jen instrukcioj</a>")
+        send_message({ 'chat_id' : message['chat']['id'],
+                       'text' : note,
+                       'parse_mode' : 'HTML' })
     else:
         send_reply(message, "La ludo jam komenciĝis")
 
