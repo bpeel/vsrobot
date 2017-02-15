@@ -8,6 +8,7 @@ import sys
 import time
 import os
 import random
+import re
 
 ALL_TILES = ("AAAAAAAAABBBCCĈĈDDDEEEEEEEEFFFGGĜĜHHĤIIIIIIIIIIJJJJJĴKKKKKKLL"
              "LLMMMMMMNNNNNNNNOOOOOOOOOOOPPPPPRRRRRRRSSSSSSSŜŜTTTTTUUUŬŬVVZ")
@@ -236,6 +237,20 @@ class Game:
 
 the_game = None
 last_command_time = int(time.time())
+hat_pattern = re.compile(r'([HSGCJU])X')
+hat_replacements = {
+    'H' : 'Ĥ',
+    'S' : 'Ŝ',
+    'G' : 'Ĝ',
+    'C' : 'Ĉ',
+    'J' : 'Ĵ',
+    'U' : 'Ŭ'
+}
+
+def normalise_word(word):
+    def add_hat(match):
+        return hat_replacements[match.group(1)]
+    return hat_pattern.sub(add_hat, word.upper())
 
 def send_message(args):
     try:
@@ -469,7 +484,7 @@ def command_preni(message, args):
     if user is None:
         return
 
-    word = args.strip()
+    word = normalise_word(args.strip())
 
     if len(word) == 0:
         send_reply(message, "Bonvolu sendi vorton, ekzemple /p kato")
