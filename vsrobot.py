@@ -318,7 +318,7 @@ def score_game(chat):
                key = lambda player: (player.n_words, player.n_letters))
 
     buf.append("\nLa venkinto estas <b>")
-    buf.append(html.escape(player.name))
+    buf.append(html.escape(best.name))
     buf.append("</b>")
 
     args = {
