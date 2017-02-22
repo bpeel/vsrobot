@@ -206,11 +206,16 @@ class Game:
                                                        player,
                                                        word))
 
+                if other_player == player:
+                    other_player_name = "si mem"
+                else:
+                    other_player_name = other_player.name
+
                 return ("{} ŝtelas la vorton {} de {} kaj aldonas {} por "
                         "krei la vorton {}"
                         .format(player.name,
                                 other_word,
-                                other_player.name,
+                                other_player_name,
                                 "".join(remaining),
                                 word))
 
