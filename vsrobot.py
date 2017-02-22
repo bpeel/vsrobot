@@ -83,37 +83,6 @@ class UndoTurnTile(Undo):
     def __init__(self, letter):
         self.letter = letter
 
-    def undo(self, player):
-        the_game.tiles_in_play.remove(self.letter)
-        the_game.tile_pos -= 1
-        return ("{} remetis la literon {} en la sakon"
-                .format(player.name,
-                        self.letter))
-
-class UndoStealWord(Undo):
-    def __init__(self, from_player, from_word, to_player, to_word):
-        self.from_player = from_player
-        self.from_word = from_word
-        self.to_player = to_player
-        self.to_word = to_word
-
-    def undo(self, player):
-        the_game.tiles_in_play.extend(take_from_set(from_word, to_word))
-        to_player.words.remove(to_word)
-        from_player.words.append(from_word)
-        
-        return ("{} redonis la vorton {} al {}"
-                .format(player.name,
-                        from_word,
-                        from_player.name))
-
-class Undo:
-    pass
-
-class UndoTurnTile(Undo):
-    def __init__(self, letter):
-        self.letter = letter
-
     def undo(self, game, player):
         game.tiles_in_play.remove(self.letter)
         game.tile_pos -= 1
