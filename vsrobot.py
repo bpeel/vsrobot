@@ -44,11 +44,7 @@ urlbase = "https://api.telegram.org/bot" + apikey + "/"
 get_updates_url = urlbase + "getUpdates"
 send_message_url = urlbase + "sendMessage"
 
-try:
-    with open(update_id_file, 'r', encoding='utf-8') as f:
-        last_update_id = int(f.read().rstrip())
-except FileNotFoundError:
-    last_update_id = None
+last_update_id = None
 
 class GetUpdatesException(Exception):
     pass
@@ -318,10 +314,6 @@ def score_game(chat):
     }
 
     send_message(args)
-
-def save_last_update_id(last_update_id):
-    with open(update_id_file, 'w', encoding='utf-8') as f:
-        print(last_update_id, file=f)
 
 def is_valid_update(update, last_update_id):
     try:
@@ -594,6 +586,8 @@ while True:
         time.sleep(60)
         continue
 
+    last_update_id = None
+
     for update in updates:
         last_update_id = update['update_id']
         message = update['message']
@@ -609,5 +603,3 @@ while True:
                 print("{}".format(e), file=sys.stderr)
                 time.sleep(30)
                 break
-
-        save_last_update_id(last_update_id)
