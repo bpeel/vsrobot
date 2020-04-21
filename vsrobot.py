@@ -397,8 +397,10 @@ def command_komenci(message, args):
         the_game = Game()
         the_game.add_player(user)
         report_status(message['chat'])
-        note = ("Tajpu /turni por komenci la ludon aŭ atendu "
-                "pli da ludantoj. "
+        note = ("Aliaj ludantoj alklaku /aligxi por aliĝi.\n"
+                "\n"
+                "Kiam vi pretas, alklaku /turni por komenci la ludon.\n"
+                "\n"
                 "<a href=\"http://busydoingnothing.co.uk/vsrobot\">"
                 "Jen instrukcioj</a>")
         send_message({ 'chat_id' : message['chat']['id'],
